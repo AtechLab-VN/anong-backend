@@ -3,27 +3,14 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
-const corsMiddleware = require('./middleware/cors');
-const errorHandler = require('./middleware/errorHandler');
-
 // Import routes
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
-
-// Import Firebase routes
 const firebaseProductRoutes = require('./routes/firebaseProducts');
 const firebaseOrderRoutes = require('./routes/firebaseOrders');
 const contactRoutes = require('./routes/contact');
 
 const app = express();
-
-// Connect to database (only if MongoDB URI is configured)
-if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes('localhost')) {
-  connectDB();
-} else {
-  console.log('⚠️ MongoDB connection skipped - using Firebase only');
-}
 
 // Security middleware
 app.use(helmet());
@@ -39,8 +26,18 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS middleware
-app.use(corsMiddleware);
+// CORS middleware - simplified for Vercel
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
@@ -59,12 +56,8 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-
-// Firebase API routes
 app.use('/api/firebase/products', firebaseProductRoutes);
 app.use('/api/firebase/orders', firebaseOrderRoutes);
-
-// Contact API routes
 app.use('/api/contact', contactRoutes);
 
 // 404 handler
@@ -76,29 +69,38 @@ app.use('*', (req, res) => {
 });
 
 // Error handling middleware
-app.use(errorHandler);
-
-const PORT = process.env.PORT || 5000;
-
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy trên port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => {
-    process.exit(1);
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Server Error'
   });
 });
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.log(`Error: ${err.message}`);
-  process.exit(1);
-});
+const PORT = process.env.PORT || 5000;
 
-module.exports = app;
+// For Vercel serverless functions
+if (process.env.NODE_ENV === 'production') {
+  module.exports = app;
+} else {
+  // For local development
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 Server đang chạy trên port ${PORT}`);
+    console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
+  });
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (err, promise) => {
+    console.log(`Error: ${err.message}`);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (err) => {
+    console.log(`Error: ${err.message}`);
+    process.exit(1);
+  });
+}
