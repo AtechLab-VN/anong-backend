@@ -41,6 +41,7 @@ firebase-debug.*.log
 
 # Firebase service account (keep example)
 firebase-service-account.json
+firebase-service-account.example.json
 
 # Uploads
 uploads/
