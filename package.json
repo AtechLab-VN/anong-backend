@@ -9,11 +9,7 @@
     "build": "echo 'No build step required'",
     "vercel-build": "echo 'No build step required'",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup-db": "node scripts/setupDatabase.js",
-    "setup-atlas": "node scripts/setupAtlas.js",
-    "setup-firebase": "node scripts/setupFirebase.js",
-    "check-db": "node scripts/checkDatabase.js",
-    "seed": "node scripts/seedData.js"
+    "setup-firebase": "node scripts/setupFirebase.js"
   },
   "dependencies": {
     "axios": "^1.12.2",
@@ -26,7 +22,6 @@
     "firebase-admin": "^11.11.1",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.5.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.9"
   },
@@ -38,7 +33,7 @@
     "api",
     "nodejs",
     "express",
-    "mongodb"
+    "firebase"
   ],
   "author": "Your Name",
   "license": "MIT"

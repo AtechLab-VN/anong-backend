@@ -3,27 +3,15 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
 const corsMiddleware = require('./middleware/cors');
 const errorHandler = require('./middleware/errorHandler');
 
-// Import routes
-const productRoutes = require('./routes/products');
-const orderRoutes = require('./routes/orders');
-
-// Import Firebase routes
+// Import Firebase routes only
 const firebaseProductRoutes = require('./routes/firebaseProducts');
 const firebaseOrderRoutes = require('./routes/firebaseOrders');
 const contactRoutes = require('./routes/contact');
 
 const app = express();
-
-// Connect to database (only if MongoDB URI is configured)
-if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes('localhost')) {
-  connectDB();
-} else {
-  console.log('⚠️ MongoDB connection skipped - using Firebase only');
-}
 
 // Security middleware
 app.use(helmet());
@@ -56,15 +44,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API routes
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-
-// Firebase API routes
+// Firebase API routes only
 app.use('/api/firebase/products', firebaseProductRoutes);
 app.use('/api/firebase/orders', firebaseOrderRoutes);
-
-// Contact API routes
 app.use('/api/contact', contactRoutes);
 
 // 404 handler
@@ -84,6 +66,7 @@ const server = app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy trên port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔥 Using Firebase only - MongoDB removed`);
 });
 
 // Handle unhandled promise rejections
